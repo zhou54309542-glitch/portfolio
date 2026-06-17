@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap');
+
+:root {
+  font-family: 'IBM Plex Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #dfe8ee;
+  background:
+    radial-gradient(circle at top, rgba(201, 255, 61, 0.07), transparent 30%),
+    linear-gradient(180deg, #070d11, #0a1116 42%, #070d11);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --bg: #070d11;
+  --surface: #0b1319;
+  --surface-elevated: #0f171d;
+  --border: rgba(216, 235, 245, 0.12);
+  --border-strong: rgba(216, 235, 245, 0.18);
+  --text-primary: #edf4f8;
+  --text-secondary: rgba(237, 244, 248, 0.82);
+  --text-muted: rgba(237, 244, 248, 0.56);
+  --accent-cool: #c9ff3d;
+  --accent-warm: #a8f21f;
+  --font-display: 'Sora', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top, rgba(201, 255, 61, 0.07), transparent 30%),
+    linear-gradient(180deg, #070d11, #0a1116 42%, #070d11);
+  color: var(--text-primary);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.4), transparent 75%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+a {
+  color: inherit;
+}
+
+img,
+video {
+  max-width: 100%;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: clamp(56px, 7vw, 104px);
+  line-height: 0.96;
+  color: var(--text-primary);
+}
+
+h2 {
+  font-size: clamp(34px, 4vw, 56px);
+  line-height: 1.06;
+  color: var(--text-primary);
+}
+
+p {
+  font-size: 16px;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

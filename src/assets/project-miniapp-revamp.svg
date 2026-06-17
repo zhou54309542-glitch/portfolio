@@ -1,0 +1,35 @@
+<svg width="1600" height="1080" viewBox="0 0 1600 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1080" fill="#081015"/>
+  <rect x="100" y="80" width="1400" height="920" stroke="rgba(255,255,255,0.1)"/>
+  <circle cx="320" cy="238" r="132" fill="url(#paint0_radial_4_2)" fill-opacity="0.78"/>
+  <circle cx="1260" cy="840" r="188" fill="url(#paint1_radial_4_2)" fill-opacity="0.24"/>
+  <rect x="236" y="168" width="1128" height="744" rx="36" fill="#0B141B" stroke="rgba(255,255,255,0.12)"/>
+  <rect x="320" y="220" width="276" height="642" rx="28" fill="#101C25" stroke="rgba(255,255,255,0.1)"/>
+  <rect x="654" y="220" width="620" height="156" rx="24" fill="#0E191F" stroke="rgba(255,255,255,0.1)"/>
+  <rect x="654" y="420" width="620" height="196" rx="24" fill="#0E191F" stroke="rgba(255,255,255,0.1)"/>
+  <rect x="654" y="658" width="296" height="156" rx="24" fill="#0E191F" stroke="rgba(255,255,255,0.1)"/>
+  <rect x="978" y="658" width="296" height="156" rx="24" fill="#0E191F" stroke="rgba(255,255,255,0.1)"/>
+  <path d="M382 284H534" stroke="#E7F0F5" stroke-opacity="0.86" stroke-width="3"/>
+  <path d="M382 318H490" stroke="#E7F0F5" stroke-opacity="0.26" stroke-width="3"/>
+  <path d="M382 408H534" stroke="#69BAC7" stroke-opacity="0.82" stroke-width="3"/>
+  <path d="M382 452H498" stroke="#E7F0F5" stroke-opacity="0.24" stroke-width="3"/>
+  <path d="M706 278H1044" stroke="#E7F0F5" stroke-opacity="0.88" stroke-width="3"/>
+  <path d="M706 314H904" stroke="#E7F0F5" stroke-opacity="0.3" stroke-width="3"/>
+  <path d="M706 478H1222" stroke="#E7F0F5" stroke-opacity="0.22" stroke-width="2"/>
+  <path d="M706 528H1182" stroke="#E7F0F5" stroke-opacity="0.22" stroke-width="2"/>
+  <path d="M706 578H1086" stroke="#E7F0F5" stroke-opacity="0.22" stroke-width="2"/>
+  <path d="M706 718H866" stroke="#DEBA69" stroke-opacity="0.8" stroke-width="3"/>
+  <path d="M1030 718H1188" stroke="#69BAC7" stroke-opacity="0.8" stroke-width="3"/>
+  <path d="M706 754H818" stroke="#E7F0F5" stroke-opacity="0.24" stroke-width="3"/>
+  <path d="M1030 754H1138" stroke="#E7F0F5" stroke-opacity="0.24" stroke-width="3"/>
+  <defs>
+    <radialGradient id="paint0_radial_4_2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(320 238) rotate(90) scale(132)">
+      <stop stop-color="#69BAC7"/>
+      <stop offset="1" stop-color="#69BAC7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="paint1_radial_4_2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1260 840) rotate(90) scale(188)">
+      <stop stop-color="#DEBA69"/>
+      <stop offset="1" stop-color="#DEBA69" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>
