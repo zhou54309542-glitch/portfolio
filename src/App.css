@@ -1686,11 +1686,6 @@ html {
   padding-top: 24px;
 }
 
-.hero-gallery-card:hover,
-.hero-gallery-viewport:hover .hero-gallery-track {
-  animation-play-state: paused;
-}
-
 .hero-gallery-card:hover {
   transform: translateY(-2px);
 }
@@ -1708,6 +1703,13 @@ html {
   padding: 6px 0 10px;
   mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.hero-gallery-viewport.is-dragging {
+  cursor: grabbing;
 }
 
 .hero-gallery-track {
@@ -1715,7 +1717,7 @@ html {
   gap: 14px;
   align-items: start;
   width: max-content;
-  animation: heroGalleryMarquee 110s linear infinite;
+  transform: translate3d(var(--hero-track-x, 0px), 0, 0);
   will-change: transform;
 }
 
@@ -1736,6 +1738,9 @@ html {
     transform 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease;
+  transform-origin: center 62%;
+  animation: heroCardSway 7.6s cubic-bezier(0.37, 0, 0.2, 1) infinite;
+  animation-delay: calc(var(--stagger-index, 0) * -0.34s);
 }
 
 .hero-gallery-card::before {
@@ -1763,7 +1768,8 @@ html {
   object-position: center top;
   transform: translate3d(0, 0, 0) scale(1.05);
   will-change: transform;
-  animation: heroCardImageWave 10.5s ease-in-out infinite;
+  filter: saturate(1.02);
+  animation: heroCardImageWaveX 6.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   animation-delay: calc(var(--stagger-index, 0) * -0.42s);
 }
 
@@ -1798,6 +1804,8 @@ html {
   transform-origin: center;
   pointer-events: none;
   opacity: 0.36;
+  animation: heroCardRippleShift 6.2s ease-in-out infinite;
+  animation-delay: calc(var(--stagger-index, 0) * -0.31s);
 }
 
 .hero-gallery-card span {
@@ -1815,6 +1823,12 @@ html {
 }
 
 .hero-gallery-card:hover img {
+  animation-play-state: paused;
+}
+
+.hero-gallery-viewport.is-dragging .hero-gallery-card,
+.hero-gallery-viewport.is-dragging .hero-gallery-card img,
+.hero-gallery-viewport.is-dragging .hero-gallery-ripple {
   animation-play-state: paused;
 }
 
@@ -2958,58 +2972,63 @@ html {
   filter: saturate(1) brightness(1);
 }
 
-@keyframes heroGalleryMarquee {
-  from {
-    transform: translate3d(0, 0, 0);
+@keyframes heroCardSway {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-0.9deg) skewY(-0.25deg);
   }
 
-  to {
-    transform: translate3d(calc(-50% - 7px), 0, 0);
+  20% {
+    transform: translate3d(-3px, 0, 0) rotate(1.1deg) skewY(0.3deg);
+  }
+
+  45% {
+    transform: translate3d(2px, 0, 0) rotate(-0.45deg) skewY(-0.15deg);
+  }
+
+  70% {
+    transform: translate3d(4px, 0, 0) rotate(1.35deg) skewY(0.35deg);
   }
 }
 
-@keyframes heroCardFloat {
+@keyframes heroCardImageWaveX {
   0%,
   100% {
-    transform: translate3d(0, 0, 0) rotate(-0.2deg);
-  }
-
-  25% {
-    transform: translate3d(0, -3px, 0) rotate(0.15deg);
-  }
-
-  50% {
-    transform: translate3d(0, 2px, 0) rotate(-0.12deg);
-  }
-
-  75% {
-    transform: translate3d(0, -2px, 0) rotate(0.1deg);
-  }
-}
-
-@keyframes heroCardImageWave {
-  0%,
-  100% {
-    transform: translate3d(0, calc(var(--parallax-y, 0px) + 0px), 0) scale(1.08);
+    transform: translate3d(-4px, 0, 0) scale(1.055) skewX(-0.5deg);
     filter: saturate(1) brightness(1);
   }
 
+  25% {
+    transform: translate3d(4px, 0, 0) scale(1.07) skewX(0.55deg);
+    filter: saturate(1.03) brightness(1.02);
+  }
+
   50% {
-    transform: translate3d(0, calc(var(--parallax-y, 0px) - 4px), 0) scale(1.11);
+    transform: translate3d(-2px, 0, 0) scale(1.065) skewX(-0.3deg);
+    filter: saturate(1.02) brightness(1.01);
+  }
+
+  75% {
+    transform: translate3d(5px, 0, 0) scale(1.072) skewX(0.6deg);
     filter: saturate(1.04) brightness(1.03);
   }
 }
 
-@keyframes heroCardRipple {
+@keyframes heroCardRippleShift {
   0%,
   100% {
-    transform: translate3d(-8%, -1%, 0) scale(1.08) rotate(0deg);
+    transform: translate3d(-7%, 0, 0) scale(1.04) skewX(-1.2deg);
+    opacity: 0.28;
+  }
+
+  35% {
+    transform: translate3d(5%, 0, 0) scale(1.08) skewX(1.35deg);
     opacity: 0.42;
   }
 
-  50% {
-    transform: translate3d(8%, 2%, 0) scale(1.14) rotate(1.6deg);
-    opacity: 0.62;
+  70% {
+    transform: translate3d(-2%, 0, 0) scale(1.06) skewX(-0.5deg);
+    opacity: 0.34;
   }
 }
 

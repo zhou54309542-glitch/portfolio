@@ -229,6 +229,21 @@ function App() {
   const shellRef = useRef(null)
   const lightboxImageWrapRef = useRef(null)
   const profileTiltRef = useRef(null)
+  const heroGalleryViewportRef = useRef(null)
+  const heroGalleryTrackRef = useRef(null)
+  const heroGalleryMotionRef = useRef({
+    rafId: 0,
+    offset: 0,
+    velocity: 0.18,
+    targetVelocity: 0.18,
+    trackWidth: 0,
+    isPointerDown: false,
+    isDragging: false,
+    wasDragging: false,
+    pointerStartX: 0,
+    pointerLastX: 0,
+    pointerLastTime: 0,
+  })
   const careerScrollerRef = useRef(null)
   const careerDragRef = useRef({
     isPointerDown: false,
@@ -461,6 +476,140 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const viewport = heroGalleryViewportRef.current
+    const track = heroGalleryTrackRef.current
+
+    if (!viewport || !track) return undefined
+
+    const motion = heroGalleryMotionRef.current
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    const measureTrack = () => {
+      motion.trackWidth = track.scrollWidth / 2
+      if (!Number.isFinite(motion.trackWidth) || motion.trackWidth <= 0) {
+        motion.trackWidth = 0
+      }
+    }
+
+    const applyOffset = () => {
+      if (!motion.trackWidth) return
+
+      if (motion.offset <= -motion.trackWidth) {
+        motion.offset += motion.trackWidth
+      } else if (motion.offset > 0) {
+        motion.offset -= motion.trackWidth
+      }
+
+      track.style.setProperty('--hero-track-x', `${motion.offset}px`)
+    }
+
+    const animate = () => {
+      motion.rafId = window.requestAnimationFrame(animate)
+
+      if (motion.isPointerDown || !motion.trackWidth) return
+
+      motion.targetVelocity = reduceMotion ? 0.08 : 0.18
+      motion.velocity += (motion.targetVelocity - motion.velocity) * 0.035
+
+      if (Math.abs(motion.velocity) < 0.01 && reduceMotion) {
+        motion.velocity = 0.01
+      }
+
+      motion.offset -= motion.velocity
+      applyOffset()
+    }
+
+    const resetDraggingState = (pointerId) => {
+      if (pointerId !== undefined) {
+        try {
+          viewport.releasePointerCapture?.(pointerId)
+        } catch {}
+      }
+
+      motion.wasDragging = motion.isDragging
+      motion.isPointerDown = false
+      motion.isDragging = false
+      viewport.classList.remove('is-dragging')
+    }
+
+    const handlePointerDown = (event) => {
+      motion.isPointerDown = true
+      motion.isDragging = false
+      motion.wasDragging = false
+      motion.pointerStartX = event.clientX
+      motion.pointerLastX = event.clientX
+      motion.pointerLastTime = performance.now()
+      motion.targetVelocity = 0
+      motion.velocity *= 0.92
+      viewport.setPointerCapture?.(event.pointerId)
+    }
+
+    const handlePointerMove = (event) => {
+      if (!motion.isPointerDown) return
+
+      const now = performance.now()
+      const deltaX = event.clientX - motion.pointerLastX
+      const totalDelta = event.clientX - motion.pointerStartX
+
+      if (!motion.isDragging && Math.abs(totalDelta) > 6) {
+        motion.isDragging = true
+        viewport.classList.add('is-dragging')
+      }
+
+      if (!motion.isDragging) return
+
+      motion.offset += deltaX
+      applyOffset()
+
+      const deltaTime = Math.max(now - motion.pointerLastTime, 16)
+      motion.velocity = Math.max(Math.min((-deltaX / deltaTime) * 13, 3.2), -3.2)
+      motion.pointerLastX = event.clientX
+      motion.pointerLastTime = now
+    }
+
+    const handlePointerUp = (event) => {
+      if (motion.isDragging) {
+        motion.targetVelocity = Math.max(Math.min(Math.abs(motion.velocity), 2.4), 0.18)
+      }
+      resetDraggingState(event.pointerId)
+    }
+
+    const handlePointerLeave = (event) => {
+      if (!motion.isPointerDown) return
+      resetDraggingState(event.pointerId)
+    }
+
+    const handleResize = () => {
+      measureTrack()
+      applyOffset()
+    }
+
+    measureTrack()
+    applyOffset()
+    motion.rafId = window.requestAnimationFrame(animate)
+
+    const resizeObserver = new ResizeObserver(handleResize)
+    resizeObserver.observe(track)
+    window.addEventListener('resize', handleResize, { passive: true })
+    viewport.addEventListener('pointerdown', handlePointerDown)
+    viewport.addEventListener('pointermove', handlePointerMove)
+    viewport.addEventListener('pointerup', handlePointerUp)
+    viewport.addEventListener('pointercancel', handlePointerUp)
+    viewport.addEventListener('pointerleave', handlePointerLeave)
+
+    return () => {
+      if (motion.rafId) window.cancelAnimationFrame(motion.rafId)
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', handleResize)
+      viewport.removeEventListener('pointerdown', handlePointerDown)
+      viewport.removeEventListener('pointermove', handlePointerMove)
+      viewport.removeEventListener('pointerup', handlePointerUp)
+      viewport.removeEventListener('pointercancel', handlePointerUp)
+      viewport.removeEventListener('pointerleave', handlePointerLeave)
+    }
+  }, [])
+
   const showNextWork = () => {
     setActiveWorkIndex((current) => (current === null ? 0 : (current + 1) % heroWorks.length))
   }
@@ -627,6 +776,15 @@ function App() {
     setActiveCareerIndex(index)
   }
 
+  const handleHeroWorkClick = (index) => {
+    if (heroGalleryMotionRef.current.wasDragging) {
+      heroGalleryMotionRef.current.wasDragging = false
+      return
+    }
+
+    setActiveWorkIndex(index)
+  }
+
   const handleCareerCardKeyDown = (event, index) => {
     if (event.key !== 'Enter' && event.key !== ' ') return
 
@@ -734,13 +892,13 @@ function App() {
             </div>
 
             <div className="hero-gallery" aria-label="作品预览带">
-              <div className="hero-gallery-viewport">
-                <div className="hero-gallery-track">
+              <div className="hero-gallery-viewport" ref={heroGalleryViewportRef}>
+                <div className="hero-gallery-track" ref={heroGalleryTrackRef}>
                   {heroGalleryLoop.map((work, index) => (
                     <button
                       className="hero-gallery-card"
                       key={`${work.title}-${index}`}
-                      onClick={() => setActiveWorkIndex(index % heroWorks.length)}
+                      onClick={() => handleHeroWorkClick(index % heroWorks.length)}
                       type="button"
                       aria-label={`查看 ${work.title}`}
                       style={{ '--stagger-index': index % heroWorks.length }}
