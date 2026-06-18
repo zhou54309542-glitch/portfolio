@@ -1,25 +1,20 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import './App.css'
-import BorderGlow from './BorderGlow'
 import Grainient from './Grainient'
+import heroPosterImage from './assets/hero.png'
 import portraitImage from './assets/portrait-ui-designer.svg'
-import profileAvatarImage from './assets/profile-ip-character.png'
-import coverAiDesign from './assets/cover-ai-design.png'
-import coverBEndDesign from './assets/cover-b-end-design.png'
-import coverMobileDesign from './assets/cover-mobile-design.png'
-import coverVisualDesign from './assets/cover-visual-design.png'
+import profileAvatarImage from './assets/profile-ip-character.webp'
+import coverAiDesign from './assets/cover-ai-design.webp'
+import coverBEndDesign from './assets/cover-b-end-design.webp'
+import coverMobileDesign from './assets/cover-mobile-design.webp'
+import coverVisualDesign from './assets/cover-visual-design.webp'
 import projectAiImage from './assets/project-ai-commerce.svg'
 import projectRobotImage from './assets/project-robot-ui.svg'
 import projectMiniappImage from './assets/project-miniapp-revamp.svg'
 
 const publicAsset = (assetPath) => `${import.meta.env.BASE_URL}${assetPath}`
-
-const metrics = [
-  { value: '5Y+', label: 'UI / 视觉设计经验' },
-  { value: '100+', label: '服务本地商家数量' },
-  { value: '40%', label: '短视频曝光提升' },
-  { value: '8+', label: '展会与品牌物料项目' },
-]
+const thumbAsset = (assetUrl) =>
+  assetUrl.replace('/portfolio-works/', '/portfolio-works-thumbs/').replace(/\.[^.]+$/u, '.webp')
 
 const profileFacts = [
   { label: '服务角色', value: 'UI / Visual Designer' },
@@ -184,33 +179,7 @@ const heroWorks = [
   { title: '一次性纸杯', subtitle: '视觉平面设计 / 包装物料', image: publicAsset('portfolio-works/visual/一次性纸杯.jpg'), tags: ['视觉平面设计', '包装物料'] },
   { title: '纸杯1', subtitle: '视觉平面设计 / 包装物料', image: publicAsset('portfolio-works/visual/纸杯1.jpg'), tags: ['视觉平面设计', '包装物料'] },
 ]
-
-const strengths = [
-  {
-    title: '系统化界面设计',
-    description: '熟练搭建组件库、设计规范与页面逻辑，让复杂业务也能保持统一语言。',
-  },
-  {
-    title: '品牌与物料整合',
-    description: '能把产品界面、官网、会展物料与传播视觉放进同一套品牌表达里。',
-  },
-  {
-    title: '动效与视频表达',
-    description: '可独立完成基础动效方案、短视频剪辑与展会宣发内容，补齐视觉落地链路。',
-  },
-  {
-    title: 'AI辅助创意流程',
-    description: '熟练使用 Midjourney、Coze、Stitch、OpenClaw 等工具加速探索与提案。',
-  },
-  {
-    title: '跨团队协作推进',
-    description: '能在产品、研发、业务和印刷交付之间切换语境，推动设计真正上线。',
-  },
-  {
-    title: 'B端复杂场景经验',
-    description: '持续参与 AI、电商、机器人等场景，擅长处理信息密度高、流程长的业务界面。',
-  },
-]
+const heroGalleryLoop = [...heroWorks, ...heroWorks]
 
 const coreStrengthCards = [
   {
@@ -255,17 +224,6 @@ const contactDetails = [
   { label: '邮箱', value: '54309542@qq.com', href: 'mailto:54309542@qq.com' },
   { label: '城市', value: '杭州 / 可远程协作' },
 ]
-const borderGlowProps = {
-  edgeSensitivity: 30,
-  glowColor: '255 226 188',
-  backgroundColor: '#120F17',
-  borderRadius: 28,
-  glowRadius: 40,
-  glowIntensity: 0.72,
-  coneSpread: 25,
-  animated: false,
-  colors: ['rgba(255, 226, 188, 0.42)', 'rgba(113, 67, 55, 0.32)', 'rgba(82, 116, 124, 0.38)'],
-}
 
 function App() {
   const shellRef = useRef(null)
@@ -285,11 +243,11 @@ function App() {
   const [fitMode, setFitMode] = useState('fit-width')
   const [imageNaturalSize, setImageNaturalSize] = useState({ width: 0, height: 0 })
   const [viewerSize, setViewerSize] = useState({ width: 0, height: 0 })
+  const [shouldLoadHeroVideo, setShouldLoadHeroVideo] = useState(false)
   const heroVideoSrc = publicAsset('echobird-home.mp4')
   const contactQrSrc = publicAsset('contact-qr.png')
 
   const activeWork = activeWorkIndex === null ? null : heroWorks[activeWorkIndex]
-  const heroGalleryLoop = [...heroWorks, ...heroWorks]
   const lightboxImageStyle = (() => {
     if (!activeWork) return undefined
 
@@ -361,6 +319,30 @@ function App() {
   }, [activeWorkIndex])
 
   useEffect(() => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reducedMotion) return undefined
+
+    let idleId = 0
+    let timeoutId = 0
+    const startLoading = () => setShouldLoadHeroVideo(true)
+
+    if ('requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(startLoading, { timeout: 1400 })
+    } else {
+      timeoutId = window.setTimeout(startLoading, 320)
+    }
+
+    return () => {
+      if (idleId && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleId)
+      }
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     if (!activeWork || !lightboxImageWrapRef.current) return undefined
 
     const element = lightboxImageWrapRef.current
@@ -400,11 +382,13 @@ function App() {
     })
 
     const sections = [...root.querySelectorAll('[data-motion-section]')]
-    const sectionObserver = new IntersectionObserver(
+    let sectionObserver
+    sectionObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('is-inview')
+            sectionObserver.unobserve(entry.target)
           }
         })
       },
@@ -417,12 +401,18 @@ function App() {
     sections.forEach((section) => sectionObserver.observe(section))
 
     const parallaxItems = [...root.querySelectorAll('[data-parallax]')]
+    const activeParallaxItems = new Set()
     let rafId = 0
 
     const updateParallax = () => {
+      if (!activeParallaxItems.size) {
+        rafId = 0
+        return
+      }
+
       const viewportHeight = window.innerHeight || 1
 
-      parallaxItems.forEach((item) => {
+      activeParallaxItems.forEach((item) => {
         const rect = item.getBoundingClientRect()
         const intensity = Number(item.getAttribute('data-parallax') || 18)
         const progress = (rect.top + rect.height * 0.5 - viewportHeight * 0.5) / viewportHeight
@@ -438,14 +428,34 @@ function App() {
       rafId = window.requestAnimationFrame(updateParallax)
     }
 
-    updateParallax()
-    window.addEventListener('scroll', requestParallaxUpdate, { passive: true })
-    window.addEventListener('resize', requestParallaxUpdate)
+    let parallaxObserver
+
+    if (parallaxItems.length) {
+      parallaxObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) activeParallaxItems.add(entry.target)
+            else activeParallaxItems.delete(entry.target)
+          })
+          requestParallaxUpdate()
+        },
+        {
+          threshold: 0,
+          rootMargin: '20% 0px 20% 0px',
+        },
+      )
+
+      parallaxItems.forEach((item) => parallaxObserver.observe(item))
+      updateParallax()
+      window.addEventListener('scroll', requestParallaxUpdate, { passive: true })
+      window.addEventListener('resize', requestParallaxUpdate, { passive: true })
+    }
 
     return () => {
       window.cancelAnimationFrame(enterFrame)
       if (rafId) window.cancelAnimationFrame(rafId)
       sectionObserver.disconnect()
+      parallaxObserver?.disconnect()
       window.removeEventListener('scroll', requestParallaxUpdate)
       window.removeEventListener('resize', requestParallaxUpdate)
     }
@@ -695,10 +705,10 @@ function App() {
           muted
           loop
           playsInline
-          preload="auto"
-          poster={projectAiImage}
+          preload="metadata"
+          poster={heroPosterImage}
         >
-          <source src={heroVideoSrc} type="video/mp4" />
+          {shouldLoadHeroVideo ? <source src={heroVideoSrc} type="video/mp4" /> : null}
         </video>
         <div className="hero-grid" aria-hidden="true" />
         <img className="hero-portrait" src={portraitImage} alt="" aria-hidden="true" />
@@ -736,7 +746,14 @@ function App() {
                       style={{ '--stagger-index': index % heroWorks.length }}
                     >
                       <span className="hero-gallery-ripple" aria-hidden="true" />
-                      <img src={work.image} alt={work.title} data-parallax="18" />
+                      <img
+                        src={thumbAsset(work.image)}
+                        alt={work.title}
+                        loading={index < 10 ? 'eager' : 'lazy'}
+                        decoding="async"
+                        fetchPriority={index < 4 ? 'high' : 'low'}
+                        sizes="(max-width: 820px) 116px, 134px"
+                      />
                       <span>{work.title}</span>
                     </button>
                   ))}
@@ -768,7 +785,13 @@ function App() {
                 onTouchEnd={resetProfileTilt}
                 ref={profileTiltRef}
               >
-                <img src={profileAvatarImage} alt="ZHOU 的 3D 设计师头像" data-parallax="22" />
+                <img
+                  src={profileAvatarImage}
+                  alt="ZHOU 的 3D 设计师头像"
+                  data-parallax="22"
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
             </div>
 
@@ -893,7 +916,15 @@ function App() {
           <div className="works-grid">
             {selectedWorks.map((work, index) => (
               <article className="work-card" key={work.title} style={{ '--stagger-index': index }}>
-                <img src={work.image} alt={work.title} className="work-card__image" data-parallax="24" />
+                <img
+                  src={work.image}
+                  alt={work.title}
+                  className="work-card__image"
+                  data-parallax="24"
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(max-width: 1180px) 100vw, 50vw"
+                />
                 <div className="work-card__shade" aria-hidden="true" />
                 <div className="work-card__content">
                   <h3>{work.title}</h3>
@@ -971,7 +1002,7 @@ function App() {
             </div>
             <p className="contact-panel-note">Visual, Brand &amp; AI Design</p>
             <div className="contact-code">
-              <img src={contactQrSrc} alt="ZHOU 的微信二维码" />
+              <img src={contactQrSrc} alt="ZHOU 的微信二维码" loading="lazy" decoding="async" />
             </div>
           </aside>
         </div>

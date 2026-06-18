@@ -114,6 +114,14 @@ html {
     rgba(7, 13, 17, 0.38);
 }
 
+.profile-section,
+.projects-section,
+.strengths-section,
+.contact-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 960px;
+}
+
 .section-label {
   margin: 0 0 20px;
   font-size: 12px;
@@ -1707,7 +1715,7 @@ html {
   gap: 14px;
   align-items: start;
   width: max-content;
-  animation: heroGalleryMarquee 88s linear infinite;
+  animation: heroGalleryMarquee 110s linear infinite;
   will-change: transform;
 }
 
@@ -1728,8 +1736,6 @@ html {
     transform 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease;
-  animation: heroCardFloat 8.6s cubic-bezier(0.37, 0, 0.2, 1) infinite;
-  animation-delay: calc(var(--stagger-index, 0) * -0.58s);
 }
 
 .hero-gallery-card::before {
@@ -1755,9 +1761,9 @@ html {
   height: 100%;
   object-fit: cover;
   object-position: center top;
-  transform: translate3d(0, var(--parallax-y, 0px), 0) scale(1.08);
+  transform: translate3d(0, 0, 0) scale(1.05);
   will-change: transform;
-  animation: heroCardImageWave 7.4s ease-in-out infinite;
+  animation: heroCardImageWave 10.5s ease-in-out infinite;
   animation-delay: calc(var(--stagger-index, 0) * -0.42s);
 }
 
@@ -1787,12 +1793,11 @@ html {
     );
   mix-blend-mode: screen;
   opacity: 0.52;
-  filter: blur(10px);
-  transform: translate3d(-8%, 0, 0) scale(1.08);
+  filter: blur(6px);
+  transform: translate3d(0, 0, 0) scale(1.04);
   transform-origin: center;
   pointer-events: none;
-  animation: heroCardRipple 9.2s ease-in-out infinite;
-  animation-delay: calc(var(--stagger-index, 0) * -0.46s);
+  opacity: 0.36;
 }
 
 .hero-gallery-card span {
@@ -1809,9 +1814,7 @@ html {
   text-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
 }
 
-.hero-gallery-card:hover,
-.hero-gallery-card:hover img,
-.hero-gallery-card:hover .hero-gallery-ripple {
+.hero-gallery-card:hover img {
   animation-play-state: paused;
 }
 

@@ -64,10 +64,14 @@ function Grainient({
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let frameId
     let grainCache
+    let resizeObserver
+    let isDocumentHidden = document.hidden
+    let lastFrameTime = 0
+    const frameInterval = reducedMotion ? Infinity : 1000 / 18
 
     const resize = () => {
       const rect = parent.getBoundingClientRect()
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5)
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.1)
       canvas.width = Math.max(1, Math.floor(rect.width * pixelRatio))
       canvas.height = Math.max(1, Math.floor(rect.height * pixelRatio))
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
@@ -100,6 +104,19 @@ function Grainient({
     }
 
     const draw = (time = 0) => {
+      frameId = 0
+
+      if (isDocumentHidden) {
+        frameId = window.requestAnimationFrame(draw)
+        return
+      }
+
+      if (!reducedMotion && time - lastFrameTime < frameInterval) {
+        frameId = window.requestAnimationFrame(draw)
+        return
+      }
+
+      lastFrameTime = time
       const rect = parent.getBoundingClientRect()
       const width = rect.width
       const height = rect.height
@@ -177,16 +194,33 @@ function Grainient({
         context.globalAlpha = 1
       }
 
-      frameId = window.requestAnimationFrame(draw)
+      if (!reducedMotion) {
+        frameId = window.requestAnimationFrame(draw)
+      }
     }
 
     resize()
     draw()
-    window.addEventListener('resize', resize)
+
+    if (!reducedMotion) {
+      resizeObserver = new ResizeObserver(resize)
+      resizeObserver.observe(parent)
+    }
+
+    const handleVisibilityChange = () => {
+      isDocumentHidden = document.hidden
+
+      if (!isDocumentHidden && !reducedMotion && !frameId) {
+        frameId = window.requestAnimationFrame(draw)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       window.cancelAnimationFrame(frameId)
-      window.removeEventListener('resize', resize)
+      resizeObserver?.disconnect()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [
     color1,
