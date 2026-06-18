@@ -240,9 +240,11 @@ function App() {
     isPointerDown: false,
     isDragging: false,
     wasDragging: false,
+    dragEndedAt: 0,
     pointerStartX: 0,
     pointerLastX: 0,
     pointerLastTime: 0,
+    pointerCardIndex: null,
   })
   const careerScrollerRef = useRef(null)
   const careerDragRef = useRef({
@@ -528,6 +530,7 @@ function App() {
       }
 
       motion.wasDragging = motion.isDragging
+      motion.dragEndedAt = motion.isDragging ? performance.now() : 0
       motion.isPointerDown = false
       motion.isDragging = false
       viewport.classList.remove('is-dragging')
@@ -537,6 +540,7 @@ function App() {
       motion.isPointerDown = true
       motion.isDragging = false
       motion.wasDragging = false
+      motion.pointerCardIndex = getHeroWorkIndexFromTarget(event.target)
       motion.pointerStartX = event.clientX
       motion.pointerLastX = event.clientX
       motion.pointerLastTime = performance.now()
@@ -568,11 +572,34 @@ function App() {
       motion.pointerLastTime = now
     }
 
+    const getHeroWorkIndexFromTarget = (target) => {
+      const card = target instanceof Element ? target.closest('[data-hero-work-index]') : null
+
+      if (!card) return null
+
+      const index = Number(card.getAttribute('data-hero-work-index'))
+
+      if (Number.isNaN(index)) return null
+
+      return index
+    }
+
     const handlePointerUp = (event) => {
+      const shouldOpenCard = motion.isPointerDown && !motion.isDragging
+      const pointerCardIndex = motion.pointerCardIndex
+
       if (motion.isDragging) {
         motion.targetVelocity = Math.max(Math.min(Math.abs(motion.velocity), 2.4), 0.18)
       }
+
       resetDraggingState(event.pointerId)
+      motion.pointerCardIndex = null
+
+      if (shouldOpenCard && pointerCardIndex !== null) {
+        window.requestAnimationFrame(() => {
+          setActiveWorkIndex(pointerCardIndex)
+        })
+      }
     }
 
     const handlePointerLeave = (event) => {
@@ -777,11 +804,14 @@ function App() {
   }
 
   const handleHeroWorkClick = (index) => {
-    if (heroGalleryMotionRef.current.wasDragging) {
-      heroGalleryMotionRef.current.wasDragging = false
+    const motion = heroGalleryMotionRef.current
+
+    if (motion.wasDragging && performance.now() - motion.dragEndedAt < 280) {
+      motion.wasDragging = false
       return
     }
 
+    motion.wasDragging = false
     setActiveWorkIndex(index)
   }
 
@@ -900,6 +930,7 @@ function App() {
                       key={`${work.title}-${index}`}
                       onClick={() => handleHeroWorkClick(index % heroWorks.length)}
                       type="button"
+                      data-hero-work-index={index % heroWorks.length}
                       aria-label={`查看 ${work.title}`}
                       style={{ '--stagger-index': index % heroWorks.length }}
                     >

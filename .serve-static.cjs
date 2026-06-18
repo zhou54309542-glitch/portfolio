@@ -4,7 +4,7 @@ const path = require('path');
 
 const root = path.resolve(__dirname, 'dist');
 const host = '127.0.0.1';
-const port = 4174;
+const port = 4194;
 
 const mime = {
   '.html': 'text/html; charset=utf-8',

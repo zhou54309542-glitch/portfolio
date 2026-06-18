@@ -6,4 +6,5 @@ set "SITE_SCRIPT=C:\Users\Administrator\Documents\Codex\2026-06-12\chrome\portfo
 if not exist "%NODE_EXE%" exit /b 1
 if not exist "%SITE_SCRIPT%" exit /b 1
 
+taskkill /f /im node.exe >nul 2>nul
 start "" /min "%NODE_EXE%" "%SITE_SCRIPT%"

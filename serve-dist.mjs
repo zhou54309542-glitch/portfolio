@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const distDir = path.join(__dirname, 'dist')
 const host = '127.0.0.1'
-const port = 4174
+const port = 4194
 
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
