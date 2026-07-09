@@ -12,7 +12,7 @@ import projectAiImage from './assets/project-ai-commerce.svg'
 import projectRobotImage from './assets/project-robot-ui.svg'
 import projectMiniappImage from './assets/project-miniapp-revamp.svg'
 
-const publicAsset = (assetPath) => `${import.meta.env.BASE_URL}${assetPath}`
+const publicAsset = (assetPath) => `./${assetPath}`
 const thumbAsset = (assetUrl) =>
   assetUrl.replace('/portfolio-works/', '/portfolio-works-thumbs/').replace(/\.[^.]+$/u, '.webp')
 
@@ -240,11 +240,9 @@ function App() {
     isPointerDown: false,
     isDragging: false,
     wasDragging: false,
-    dragEndedAt: 0,
     pointerStartX: 0,
     pointerLastX: 0,
     pointerLastTime: 0,
-    pointerCardIndex: null,
   })
   const careerScrollerRef = useRef(null)
   const careerDragRef = useRef({
@@ -261,6 +259,9 @@ function App() {
   const [imageNaturalSize, setImageNaturalSize] = useState({ width: 0, height: 0 })
   const [viewerSize, setViewerSize] = useState({ width: 0, height: 0 })
   const [shouldLoadHeroVideo, setShouldLoadHeroVideo] = useState(false)
+  const [bootLoading, setBootLoading] = useState(true)
+  const [bootExiting, setBootExiting] = useState(false)
+  const [bootProgress, setBootProgress] = useState(0)
   const heroVideoSrc = publicAsset('echobird-home.mp4')
   const contactQrSrc = publicAsset('contact-qr.png')
 
@@ -295,7 +296,7 @@ function App() {
   })()
 
   useEffect(() => {
-    if (activeWorkIndex === null && activeCareerIndex === null) {
+    if (activeWorkIndex === null && activeCareerIndex === null && !bootLoading) {
       document.body.style.overflow = ''
       return
     }
@@ -305,7 +306,60 @@ function App() {
     return () => {
       document.body.style.overflow = ''
     }
-  }, [activeWorkIndex, activeCareerIndex])
+  }, [activeWorkIndex, activeCareerIndex, bootLoading])
+
+  useEffect(() => {
+    let isPageReady = document.readyState === 'complete'
+    let isMinimumTimeDone = false
+    let finishDelayId = 0
+    let removeDelayId = 0
+    let progressId = 0
+
+    const finishBootLoading = () => {
+      if (!isPageReady || !isMinimumTimeDone) return
+
+      finishDelayId = window.setTimeout(() => {
+        setBootProgress(100)
+        setBootExiting(true)
+
+        removeDelayId = window.setTimeout(() => {
+          setBootLoading(false)
+        }, 620)
+      }, 360)
+    }
+
+    const handlePageLoad = () => {
+      isPageReady = true
+      finishBootLoading()
+    }
+
+    const minimumTimerId = window.setTimeout(() => {
+      isMinimumTimeDone = true
+      finishBootLoading()
+    }, 2450)
+
+    progressId = window.setInterval(() => {
+      setBootProgress((currentProgress) => {
+        if (currentProgress >= 94) return currentProgress
+        const increment = currentProgress < 42 ? 7 : currentProgress < 76 ? 4 : 2
+        return Math.min(currentProgress + increment, 94)
+      })
+    }, 120)
+
+    if (isPageReady) {
+      finishBootLoading()
+    } else {
+      window.addEventListener('load', handlePageLoad, { once: true })
+    }
+
+    return () => {
+      window.clearTimeout(minimumTimerId)
+      window.clearTimeout(finishDelayId)
+      window.clearTimeout(removeDelayId)
+      window.clearInterval(progressId)
+      window.removeEventListener('load', handlePageLoad)
+    }
+  }, [])
 
   useEffect(() => {
     if (activeWorkIndex === null && activeCareerIndex === null) return undefined
@@ -328,12 +382,12 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [activeWorkIndex, activeCareerIndex])
 
-  useEffect(() => {
+  const resetLightboxView = () => {
     setImageZoom(1)
     setFitMode('fit-width')
     setImageNaturalSize({ width: 0, height: 0 })
     lightboxImageWrapRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-  }, [activeWorkIndex])
+  }
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -526,11 +580,12 @@ function App() {
       if (pointerId !== undefined) {
         try {
           viewport.releasePointerCapture?.(pointerId)
-        } catch {}
+        } catch {
+          // Pointer capture can already be released after fast touch gestures.
+        }
       }
 
       motion.wasDragging = motion.isDragging
-      motion.dragEndedAt = motion.isDragging ? performance.now() : 0
       motion.isPointerDown = false
       motion.isDragging = false
       viewport.classList.remove('is-dragging')
@@ -540,7 +595,6 @@ function App() {
       motion.isPointerDown = true
       motion.isDragging = false
       motion.wasDragging = false
-      motion.pointerCardIndex = getHeroWorkIndexFromTarget(event.target)
       motion.pointerStartX = event.clientX
       motion.pointerLastX = event.clientX
       motion.pointerLastTime = performance.now()
@@ -572,34 +626,11 @@ function App() {
       motion.pointerLastTime = now
     }
 
-    const getHeroWorkIndexFromTarget = (target) => {
-      const card = target instanceof Element ? target.closest('[data-hero-work-index]') : null
-
-      if (!card) return null
-
-      const index = Number(card.getAttribute('data-hero-work-index'))
-
-      if (Number.isNaN(index)) return null
-
-      return index
-    }
-
     const handlePointerUp = (event) => {
-      const shouldOpenCard = motion.isPointerDown && !motion.isDragging
-      const pointerCardIndex = motion.pointerCardIndex
-
       if (motion.isDragging) {
         motion.targetVelocity = Math.max(Math.min(Math.abs(motion.velocity), 2.4), 0.18)
       }
-
       resetDraggingState(event.pointerId)
-      motion.pointerCardIndex = null
-
-      if (shouldOpenCard && pointerCardIndex !== null) {
-        window.requestAnimationFrame(() => {
-          setActiveWorkIndex(pointerCardIndex)
-        })
-      }
     }
 
     const handlePointerLeave = (event) => {
@@ -638,10 +669,12 @@ function App() {
   }, [])
 
   const showNextWork = () => {
+    resetLightboxView()
     setActiveWorkIndex((current) => (current === null ? 0 : (current + 1) % heroWorks.length))
   }
 
   const showPreviousWork = () => {
+    resetLightboxView()
     setActiveWorkIndex((current) =>
       current === null ? heroWorks.length - 1 : (current - 1 + heroWorks.length) % heroWorks.length,
     )
@@ -785,7 +818,9 @@ function App() {
     if (pointerId !== undefined) {
       try {
         scroller.releasePointerCapture?.(pointerId)
-      } catch {}
+      } catch {
+        // Pointer capture can already be released after fast touch gestures.
+      }
     }
 
     careerDragRef.current.wasDragging = careerDragRef.current.isDragging
@@ -804,14 +839,12 @@ function App() {
   }
 
   const handleHeroWorkClick = (index) => {
-    const motion = heroGalleryMotionRef.current
-
-    if (motion.wasDragging && performance.now() - motion.dragEndedAt < 280) {
-      motion.wasDragging = false
+    if (heroGalleryMotionRef.current.wasDragging) {
+      heroGalleryMotionRef.current.wasDragging = false
       return
     }
 
-    motion.wasDragging = false
+    resetLightboxView()
     setActiveWorkIndex(index)
   }
 
@@ -837,6 +870,62 @@ function App() {
 
   return (
     <main className="portfolio-shell" ref={shellRef}>
+      {bootLoading ? (
+        <div
+          className={`boot-loader${bootExiting ? ' is-exiting' : ''}`}
+          role="status"
+          aria-live="polite"
+          aria-label={`作品集加载中，当前进度 ${bootProgress}%`}
+          style={{ '--boot-progress': `${bootProgress}%` }}
+        >
+          <div className="boot-loader__grid" aria-hidden="true" />
+          <div className="boot-loader__noise" aria-hidden="true" />
+          <div className="boot-loader__beam boot-loader__beam--one" aria-hidden="true" />
+          <div className="boot-loader__beam boot-loader__beam--two" aria-hidden="true" />
+          <div className="boot-loader__corner boot-loader__corner--tl" aria-hidden="true" />
+          <div className="boot-loader__corner boot-loader__corner--br" aria-hidden="true" />
+          <div className="boot-loader__core" aria-hidden="true">
+            <span className="boot-loader__halo boot-loader__halo--back" />
+            <span className="boot-loader__ring boot-loader__ring--outer" />
+            <span className="boot-loader__ring boot-loader__ring--inner" />
+            <span className="boot-loader__ring boot-loader__ring--pulse" />
+            <span className="boot-loader__segments" />
+            <span className="boot-loader__scanner" />
+            <span className="boot-loader__orbit boot-loader__orbit--one" />
+            <span className="boot-loader__orbit boot-loader__orbit--two" />
+            <span className="boot-loader__mark">
+              <strong data-value={bootProgress}>{bootProgress}</strong>
+              <small>%</small>
+            </span>
+            <span className="boot-loader__halo boot-loader__halo--front" />
+          </div>
+          <div className="boot-loader__copy">
+            <span>SYSTEM BOOT / ZHOU PORTFOLIO</span>
+            <strong>{bootProgress >= 100 ? 'INTERFACE ONLINE' : 'VISUAL CORE LOADING'}</strong>
+            <p>INITIALIZING DESIGN MATRIX</p>
+          </div>
+          <div className="boot-loader__progress" aria-hidden="true">
+            <span />
+            <i />
+          </div>
+          <div className="boot-loader__ticks" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className="boot-loader__readout" aria-hidden="true">
+            <span>GPU SYNC</span>
+            <span>ASSET STREAM</span>
+            <span>UI MODULES</span>
+          </div>
+        </div>
+      ) : null}
+
       <div className="grainient-page-bg" aria-hidden="true">
         <Grainient
           color1="#5e2409"
@@ -930,7 +1019,6 @@ function App() {
                       key={`${work.title}-${index}`}
                       onClick={() => handleHeroWorkClick(index % heroWorks.length)}
                       type="button"
-                      data-hero-work-index={index % heroWorks.length}
                       aria-label={`查看 ${work.title}`}
                       style={{ '--stagger-index': index % heroWorks.length }}
                     >
@@ -1332,20 +1420,6 @@ function App() {
   )
 }
 
-function ArrowUpRightIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path
-        d="M5.833 14.167 14.167 5.833M7.5 5.833h6.667V12.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function ChevronLeftIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -1379,48 +1453,6 @@ function CloseIcon() {
     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <path
         d="m6 6 8 8M14 6l-8 8"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function MailIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path
-        d="M3.333 5.833h13.334v8.334H3.333V5.833Zm0 0 6.667 5 6.667-5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function PhoneIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path
-        d="M5.485 3.333h2.067l1.033 4.133-1.291 1.292a11.667 11.667 0 0 0 3.948 3.948l1.292-1.292 4.133 1.033v2.068a1.667 1.667 0 0 1-1.667 1.666h-.833A10.833 10.833 0 0 1 3.333 5v-.833a1.667 1.667 0 0 1 1.667-1.667Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function PinIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path
-        d="M10 17.083s5-4.34 5-8.333a5 5 0 1 0-10 0c0 3.993 5 8.333 5 8.333Zm0-6.666a1.667 1.667 0 1 0 0-3.334 1.667 1.667 0 0 0 0 3.334Z"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
