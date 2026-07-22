@@ -389,6 +389,11 @@ function App() {
     lightboxImageWrapRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }
 
+  const openHeroWork = (index) => {
+    resetLightboxView()
+    setActiveWorkIndex(index)
+  }
+
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reducedMotion) return undefined
@@ -627,9 +632,34 @@ function App() {
     }
 
     const handlePointerUp = (event) => {
+      const isTap = motion.isPointerDown && !motion.isDragging
+      const cardNode = isTap
+        ? document.elementFromPoint(event.clientX, event.clientY)?.closest?.('[data-hero-work-index]')
+        : null
+
       if (motion.isDragging) {
         motion.targetVelocity = Math.max(Math.min(Math.abs(motion.velocity), 2.4), 0.18)
       }
+
+      resetDraggingState(event.pointerId)
+
+      if (!cardNode) return
+
+      const workIndex = Number(cardNode.getAttribute('data-hero-work-index'))
+      if (Number.isInteger(workIndex)) {
+        setImageZoom(1)
+        setFitMode('fit-width')
+        setImageNaturalSize({ width: 0, height: 0 })
+        lightboxImageWrapRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+        setActiveWorkIndex(workIndex)
+      }
+    }
+
+    const handlePointerCancel = (event) => {
+      if (motion.isDragging) {
+        motion.targetVelocity = Math.max(Math.min(Math.abs(motion.velocity), 2.4), 0.18)
+      }
+
       resetDraggingState(event.pointerId)
     }
 
@@ -653,7 +683,7 @@ function App() {
     viewport.addEventListener('pointerdown', handlePointerDown)
     viewport.addEventListener('pointermove', handlePointerMove)
     viewport.addEventListener('pointerup', handlePointerUp)
-    viewport.addEventListener('pointercancel', handlePointerUp)
+    viewport.addEventListener('pointercancel', handlePointerCancel)
     viewport.addEventListener('pointerleave', handlePointerLeave)
 
     return () => {
@@ -663,7 +693,7 @@ function App() {
       viewport.removeEventListener('pointerdown', handlePointerDown)
       viewport.removeEventListener('pointermove', handlePointerMove)
       viewport.removeEventListener('pointerup', handlePointerUp)
-      viewport.removeEventListener('pointercancel', handlePointerUp)
+      viewport.removeEventListener('pointercancel', handlePointerCancel)
       viewport.removeEventListener('pointerleave', handlePointerLeave)
     }
   }, [])
@@ -844,8 +874,7 @@ function App() {
       return
     }
 
-    resetLightboxView()
-    setActiveWorkIndex(index)
+    openHeroWork(index)
   }
 
   const handleCareerCardKeyDown = (event, index) => {
@@ -1019,6 +1048,7 @@ function App() {
                       key={`${work.title}-${index}`}
                       onClick={() => handleHeroWorkClick(index % heroWorks.length)}
                       type="button"
+                      data-hero-work-index={index % heroWorks.length}
                       aria-label={`查看 ${work.title}`}
                       style={{ '--stagger-index': index % heroWorks.length }}
                     >
